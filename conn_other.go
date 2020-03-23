@@ -27,7 +27,7 @@ func sessionBusPlatform() (*Conn, error) {
 	}
 
 	if i > j {
-		return nil, fmt.Errorf("dbus: failed to parse output of dbus; got endpoints (i, j)", i, j)
+		return nil, fmt.Errorf("dbus: failed to parse output of dbus; got endpoints (%d, %d)", i, j)
 	}
 
 	return Dial(string(b[i+1 : j]))
