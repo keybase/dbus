@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/godbus/dbus/v5"
+	"github.com/keybase/dbus/v5"
 )
 
 type Foo struct {

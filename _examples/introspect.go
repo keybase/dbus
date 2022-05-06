@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/godbus/dbus/v5"
-	"github.com/godbus/dbus/v5/introspect"
+	"github.com/keybase/dbus/v5"
+	"github.com/keybase/dbus/v5/introspect"
 )
 
 func main() {
