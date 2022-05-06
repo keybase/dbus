@@ -1,7 +1,9 @@
 package dbus
 
-import "reflect"
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 var variantFormatTests = []struct {
 	v interface{}
@@ -54,8 +56,10 @@ var variantParseTests = []struct {
 	{`@a{ss} {}`, map[string]string{}},
 	{`{"foo": 1}`, map[string]int32{"foo": 1}},
 	{`[{}, {"foo": "bar"}]`, []map[string]string{{}, {"foo": "bar"}}},
-	{`{"a": <1>, "b": <"foo">}`,
-		map[string]Variant{"a": MakeVariant(int32(1)), "b": MakeVariant("foo")}},
+	{
+		`{"a": <1>, "b": <"foo">}`,
+		map[string]Variant{"a": MakeVariant(int32(1)), "b": MakeVariant("foo")},
+	},
 	{`b''`, []byte{0}},
 	{`b"abc"`, []byte{'a', 'b', 'c', 0}},
 	{`b"\x01\0002\a\b\f\n\r\t"`, []byte{1, 2, 0x7, 0x8, 0xc, '\n', '\r', '\t', 0}},
@@ -74,5 +78,18 @@ func TestParseVariant(t *testing.T) {
 		if !reflect.DeepEqual(nv.value, v.v) {
 			t.Errorf("test %d: got %q, wanted %q", i+1, nv, v.v)
 		}
+	}
+}
+
+func TestVariantStore(t *testing.T) {
+	str := "foo bar"
+	v := MakeVariant(str)
+	var result string
+	err := v.Store(&result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != str {
+		t.Fatalf("expected %s, got %s\n", str, result)
 	}
 }

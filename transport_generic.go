@@ -4,7 +4,22 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"unsafe"
 )
+
+var nativeEndian binary.ByteOrder
+
+func detectEndianness() binary.ByteOrder {
+	var x uint32 = 0x01020304
+	if *(*byte)(unsafe.Pointer(&x)) == 0x01 {
+		return binary.BigEndian
+	}
+	return binary.LittleEndian
+}
+
+func init() {
+	nativeEndian = detectEndianness()
+}
 
 type genericTransport struct {
 	io.ReadWriteCloser
@@ -26,10 +41,12 @@ func (t genericTransport) ReadMessage() (*Message, error) {
 }
 
 func (t genericTransport) SendMessage(msg *Message) error {
-	for _, v := range msg.Body {
-		if _, ok := v.(UnixFD); ok {
-			return errors.New("dbus: unix fd passing not enabled")
-		}
+	fds, err := msg.CountFds()
+	if err != nil {
+		return err
 	}
-	return msg.EncodeTo(t, binary.LittleEndian)
+	if fds != 0 {
+		return errors.New("dbus: unix fd passing not enabled")
+	}
+	return msg.EncodeTo(t, nativeEndian)
 }

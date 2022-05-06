@@ -2,8 +2,10 @@ package introspect
 
 import (
 	"encoding/xml"
-	"github.com/keybase/go.dbus"
 	"reflect"
+	"strings"
+
+	"github.com/keybase/dbus/v5"
 )
 
 // Introspectable implements org.freedesktop.Introspectable.
@@ -31,7 +33,7 @@ func NewIntrospectable(n *Node) Introspectable {
 	if err != nil {
 		panic(err)
 	}
-	return Introspectable(b)
+	return Introspectable(strings.TrimSpace(IntrospectDeclarationString) + string(b))
 }
 
 // Introspect implements org.freedesktop.Introspectable.Introspect.
@@ -50,7 +52,7 @@ func Methods(v interface{}) []Method {
 		}
 		mt := t.Method(i).Type
 		if mt.NumOut() == 0 ||
-			mt.Out(mt.NumOut()-1) != reflect.TypeOf(&dbus.Error{"", nil}) {
+			mt.Out(mt.NumOut()-1) != reflect.TypeOf(&dbus.Error{}) {
 
 			continue
 		}
@@ -58,7 +60,8 @@ func Methods(v interface{}) []Method {
 		m.Name = t.Method(i).Name
 		m.Args = make([]Arg, 0, mt.NumIn()+mt.NumOut()-2)
 		for j := 1; j < mt.NumIn(); j++ {
-			if mt.In(j) != reflect.TypeOf((*dbus.Sender)(nil)).Elem() {
+			if mt.In(j) != reflect.TypeOf((*dbus.Sender)(nil)).Elem() &&
+				mt.In(j) != reflect.TypeOf((*dbus.Message)(nil)).Elem() {
 				arg := Arg{"", dbus.SignatureOfType(mt.In(j)).String(), "in"}
 				m.Args = append(m.Args, arg)
 			}

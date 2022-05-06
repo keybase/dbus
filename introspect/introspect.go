@@ -17,6 +17,12 @@ var IntrospectData = Interface{
 	},
 }
 
+// XML document type declaration of the introspection format version 1.0
+const IntrospectDeclarationString = `
+	<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+	 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+`
+
 // The introspection data for the org.freedesktop.DBus.Introspectable interface,
 // as a string.
 const IntrospectDataString = `
@@ -44,7 +50,7 @@ type Interface struct {
 	Annotations []Annotation `xml:"annotation"`
 }
 
-// Method describes a Method on an Interface as retured by an introspection.
+// Method describes a Method on an Interface as returned by an introspection.
 type Method struct {
 	Name        string       `xml:"name,attr"`
 	Args        []Arg        `xml:"arg"`
