@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"strings"
 
-	"github.com/keybase/dbus/v5"
+	"github.com/keybase/dbus"
 )
 
 // Call calls org.freedesktop.Introspectable.Introspect on a remote object

@@ -17,7 +17,7 @@ D-Bus message bus system.
 This packages requires Go 1.12 or later. It can be installed by running the command below:
 
 ```
-go get github.com/keybase/dbus/v5
+go get github.com/keybase/dbus
 ```
 
 ### Usage

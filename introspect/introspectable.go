@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/keybase/dbus/v5"
+	"github.com/keybase/dbus"
 )
 
 // Introspectable implements org.freedesktop.Introspectable.

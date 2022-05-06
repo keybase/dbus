@@ -1,6 +1,6 @@
 package main
 
-import "github.com/keybase/dbus/v5"
+import "github.com/keybase/dbus"
 
 func main() {
 	conn, err := dbus.ConnectSessionBus()

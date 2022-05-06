@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/keybase/dbus/v5"
-	"github.com/keybase/dbus/v5/introspect"
+	"github.com/keybase/dbus"
+	"github.com/keybase/dbus/introspect"
 )
 
 // EmitType controls how org.freedesktop.DBus.Properties.PropertiesChanged is

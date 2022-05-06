@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/keybase/dbus/v5"
+	"github.com/keybase/dbus"
 )
 
 // In order to enable TCP connections add the following configuration
