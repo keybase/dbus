@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 )
 
@@ -16,11 +17,16 @@ type Variant struct {
 // MakeVariant converts the given value to a Variant. It panics if v cannot be
 // represented as a D-Bus type.
 func MakeVariant(v interface{}) Variant {
-	return Variant{SignatureOf(v), v}
+	return MakeVariantWithSignature(v, SignatureOf(v))
+}
+
+// MakeVariantWithSignature converts the given value to a Variant.
+func MakeVariantWithSignature(v interface{}, s Signature) Variant {
+	return Variant{s, v}
 }
 
 // ParseVariant parses the given string as a variant as described at
-// https://developer.gnome.org/glib/unstable/gvariant-text.html. If sig is not
+// https://developer.gnome.org/glib/stable/gvariant-text.html. If sig is not
 // empty, it is taken to be the expected signature for the variant.
 func ParseVariant(s string, sig Signature) (Variant, error) {
 	tokens := varLex(s)
@@ -43,7 +49,7 @@ func ParseVariant(s string, sig Signature) (Variant, error) {
 }
 
 // format returns a formatted version of v and whether this string can be parsed
-// unambigously.
+// unambiguously.
 func (v Variant) format() (string, bool) {
 	switch v.sig.str[0] {
 	case 'b', 'i':
@@ -89,18 +95,27 @@ func (v Variant) format() (string, bool) {
 			return "{}", false
 		}
 		unamb := true
-		buf := bytes.NewBuffer([]byte("{"))
+		var buf bytes.Buffer
+		kvs := make([]string, rv.Len())
 		for i, k := range rv.MapKeys() {
 			s, b := MakeVariant(k.Interface()).format()
 			unamb = unamb && b
+			buf.Reset()
 			buf.WriteString(s)
 			buf.WriteString(": ")
 			s, b = MakeVariant(rv.MapIndex(k).Interface()).format()
 			unamb = unamb && b
 			buf.WriteString(s)
-			if i != rv.Len()-1 {
+			kvs[i] = buf.String()
+		}
+		buf.Reset()
+		buf.WriteByte('{')
+		sort.Strings(kvs)
+		for i, kv := range kvs {
+			if i > 0 {
 				buf.WriteString(", ")
 			}
+			buf.WriteString(kv)
 		}
 		buf.WriteByte('}')
 		return buf.String(), unamb
@@ -114,7 +129,7 @@ func (v Variant) Signature() Signature {
 }
 
 // String returns the string representation of the underlying value of v as
-// described at https://developer.gnome.org/glib/unstable/gvariant-text.html.
+// described at https://developer.gnome.org/glib/stable/gvariant-text.html.
 func (v Variant) String() string {
 	s, unamb := v.format()
 	if !unamb {
@@ -126,4 +141,10 @@ func (v Variant) String() string {
 // Value returns the underlying value of v.
 func (v Variant) Value() interface{} {
 	return v.value
+}
+
+// Store converts the variant into a native go type using the same
+// mechanism as the "Store" function.
+func (v Variant) Store(value interface{}) error {
+	return storeInterfaces(v.value, value)
 }

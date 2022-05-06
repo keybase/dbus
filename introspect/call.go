@@ -2,13 +2,14 @@ package introspect
 
 import (
 	"encoding/xml"
-	"github.com/keybase/go.dbus"
 	"strings"
+
+	"github.com/godbus/dbus/v5"
 )
 
 // Call calls org.freedesktop.Introspectable.Introspect on a remote object
 // and returns the introspection data.
-func Call(o *dbus.Object) (*Node, error) {
+func Call(o dbus.BusObject) (*Node, error) {
 	var xmldata string
 	var node Node
 

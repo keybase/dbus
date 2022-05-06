@@ -2,16 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/keybase/go.dbus"
 	"os"
+
+	"github.com/godbus/dbus/v5"
 )
 
 func main() {
-	conn, err := dbus.SessionBus()
+	conn, err := dbus.ConnectSessionBus()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to connect to session bus:", err)
 		os.Exit(1)
 	}
+	defer conn.Close()
 
 	for _, v := range []string{"method_call", "method_return", "error", "signal"} {
 		call := conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0,

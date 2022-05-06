@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/keybase/go.dbus"
-	"github.com/keybase/go.dbus/introspect"
-	"github.com/keybase/go.dbus/prop"
 	"os"
+
+	"github.com/godbus/dbus/v5"
+	"github.com/godbus/dbus/v5/introspect"
+	"github.com/godbus/dbus/v5/prop"
 )
 
 type foo string
@@ -15,22 +16,29 @@ func (f foo) Foo() (string, *dbus.Error) {
 	return string(f), nil
 }
 
+type Foo struct {
+	Id    int
+	Value string
+}
+
 func main() {
-	conn, err := dbus.SessionBus()
+	conn, err := dbus.ConnectSessionBus()
 	if err != nil {
 		panic(err)
 	}
-	reply, err := conn.RequestName("com.github.keybase.Demo",
+	defer conn.Close()
+
+	reply, err := conn.RequestName("com.github.guelfey.Demo",
 		dbus.NameFlagDoNotQueue)
 	if err != nil {
 		panic(err)
 	}
 	if reply != dbus.RequestNameReplyPrimaryOwner {
-		fmt.Fprintln(os.Stderr, "name already taken")
+		_, _ = fmt.Fprintln(os.Stderr, "name already taken")
 		os.Exit(1)
 	}
 	propsSpec := map[string]map[string]*prop.Prop{
-		"com.github.keybase.Demo": {
+		"com.github.guelfey.Demo": {
 			"SomeInt": {
 				int32(0),
 				true,
@@ -40,29 +48,55 @@ func main() {
 					return nil
 				},
 			},
+			"FooStruct": {
+				Foo{Id: 1, Value: "First"},
+				true,
+				prop.EmitTrue,
+				func(c *prop.Change) *dbus.Error {
+					var foo Foo
+					err := dbus.Store([]interface{}{c.Value}, &foo)
+					if err != nil {
+						_, _ = fmt.Fprintf(os.Stderr, "dbus.Store foo failed: %v\n", err)
+					}
+					fmt.Println(c.Name, "changed to", foo)
+					return nil
+				},
+			},
 		},
 	}
 	f := foo("Bar")
-	conn.Export(f, "/com/github/keybase/Demo", "com.github.keybase.Demo")
-	props := prop.New(conn, "/com/github/keybase/Demo", propsSpec)
+	err = conn.Export(f, "/com/github/guelfey/Demo", "com.github.guelfey.Demo")
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "export f failed: %v\n", err)
+		os.Exit(1)
+	}
+	props, err := prop.Export(conn, "/com/github/guelfey/Demo", propsSpec)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "export propsSpec failed: %v\n", err)
+		os.Exit(1)
+	}
 	n := &introspect.Node{
-		Name: "/com/github/keybase/Demo",
+		Name: "/com/github/guelfey/Demo",
 		Interfaces: []introspect.Interface{
 			introspect.IntrospectData,
 			prop.IntrospectData,
 			{
-				Name:       "com.github.keybase.Demo",
+				Name:       "com.github.guelfey.Demo",
 				Methods:    introspect.Methods(f),
-				Properties: props.Introspection("com.github.keybase.Demo"),
+				Properties: props.Introspection("com.github.guelfey.Demo"),
 			},
 		},
 	}
-	conn.Export(introspect.NewIntrospectable(n), "/com/github/keybase/Demo",
+	err = conn.Export(introspect.NewIntrospectable(n), "/com/github/guelfey/Demo",
 		"org.freedesktop.DBus.Introspectable")
-	fmt.Println("Listening on com.github.keybase.Demo / /com/github/keybase/Demo ...")
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "export introspect failed: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Listening on com.github.guelfey.Demo / /com/github/guelfey/Demo ...")
 
 	c := make(chan *dbus.Signal)
 	conn.Signal(c)
-	for _ = range c {
+	for range c {
 	}
 }

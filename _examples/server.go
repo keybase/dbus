@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/keybase/go.dbus"
-	"github.com/keybase/go.dbus/introspect"
 	"os"
+
+	"github.com/godbus/dbus/v5"
+	"github.com/godbus/dbus/v5/introspect"
 )
 
 const intro = `
 <node>
-	<interface name="com.github.keybase.Demo">
+	<interface name="com.github.guelfey.Demo">
 		<method name="Foo">
 			<arg direction="out" type="s"/>
 		</method>
@@ -23,11 +24,18 @@ func (f foo) Foo() (string, *dbus.Error) {
 }
 
 func main() {
-	conn, err := dbus.SessionBus()
+	conn, err := dbus.ConnectSessionBus()
 	if err != nil {
 		panic(err)
 	}
-	reply, err := conn.RequestName("com.github.keybase.Demo",
+	defer conn.Close()
+
+	f := foo("Bar!")
+	conn.Export(f, "/com/github/guelfey/Demo", "com.github.guelfey.Demo")
+	conn.Export(introspect.Introspectable(intro), "/com/github/guelfey/Demo",
+		"org.freedesktop.DBus.Introspectable")
+
+	reply, err := conn.RequestName("com.github.guelfey.Demo",
 		dbus.NameFlagDoNotQueue)
 	if err != nil {
 		panic(err)
@@ -36,10 +44,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "name already taken")
 		os.Exit(1)
 	}
-	f := foo("Bar!")
-	conn.Export(f, "/com/github/keybase/Demo", "com.github.keybase.Demo")
-	conn.Export(introspect.Introspectable(intro), "/com/github/keybase/Demo",
-		"org.freedesktop.DBus.Introspectable")
-	fmt.Println("Listening on com.github.keybase.Demo / /com/github/keybase/Demo ...")
+	fmt.Println("Listening on com.github.guelfey.Demo / /com/github/guelfey/Demo ...")
 	select {}
 }

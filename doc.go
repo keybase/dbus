@@ -10,8 +10,10 @@ value.
 Conversion Rules
 
 For outgoing messages, Go types are automatically converted to the
-corresponding D-Bus types. The following types are directly encoded as their
-respective D-Bus equivalents:
+corresponding D-Bus types. See the official specification at
+https://dbus.freedesktop.org/doc/dbus-specification.html#type-system for more
+information on the D-Bus type system. The following types are directly encoded
+as their respective D-Bus equivalents:
 
      Go type     | D-Bus type
      ------------+-----------
@@ -19,6 +21,8 @@ respective D-Bus equivalents:
      bool        | BOOLEAN
      int16       | INT16
      uint16      | UINT16
+     int         | INT32
+     uint        | UINT32
      int32       | INT32
      uint32      | UINT32
      int64       | INT64
@@ -28,6 +32,7 @@ respective D-Bus equivalents:
      ObjectPath  | OBJECT_PATH
      Signature   | SIGNATURE
      Variant     | VARIANT
+     interface{} | VARIANT
      UnixFDIndex | UNIX_FD
 
 Slices and arrays encode as ARRAYs of their element type.
@@ -36,10 +41,13 @@ Maps encode as DICTs, provided that their key type can be used as a key for
 a DICT.
 
 Structs other than Variant and Signature encode as a STRUCT containing their
-exported fields. Fields whose tags contain `dbus:"-"` and unexported fields will
-be skipped.
+exported fields in order. Fields whose tags contain `dbus:"-"` and unexported
+fields will be skipped.
 
 Pointers encode as the value they're pointed to.
+
+Types convertible to one of the base types above will be mapped as the
+base type.
 
 Trying to encode any other type or a slice, map or struct containing an
 unsupported type will result in an InvalidTypeError.
@@ -55,7 +63,7 @@ Handling Unix file descriptors deserves special mention. To use them, you should
 first check that they are supported on a connection by calling SupportsUnixFDs.
 If it returns true, all method of Connection will translate messages containing
 UnixFD's to messages that are accompanied by the given file descriptors with the
-UnixFD values being substituted by the correct indices. Similarily, the indices
+UnixFD values being substituted by the correct indices. Similarly, the indices
 of incoming messages are automatically resolved. It shouldn't be necessary to use
 UnixFDIndex.
 
